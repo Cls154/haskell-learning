@@ -1,9 +1,7 @@
 -- We don't import '||' from the prelude, so that we can 
 -- define our own version
-{-# LANGUAGE BlockArguments #-}
 
 import Prelude hiding ((||), (&&), gcd) 
-import System.Win32 (xBUTTON1)
 
 -- The following line declares the || operator (which we are about to
 -- re-define) to be right associative and to have precedence 2. This
@@ -94,10 +92,12 @@ exOr :: Bool -> Bool -> Bool
 exOr True x = not x
 exOr False x = x
 
+-- QUESTION 3
 ifThenElse :: Bool -> Int -> Int -> Int
 ifThenElse True x _ = x
 ifThenElse False _ y = y
 
+-- QUESTION 4
 daysInMonth :: Int -> Int
 daysInMonth 2 = 28
 daysInMonth 4 = 30
@@ -109,6 +109,7 @@ daysInMonth _ = 31
 validDate :: Int -> Int -> Bool
 validDate day month = day <= daysInMonth month
 
+-- QUESTION 5
 -- GUARDS
 -- sumNumbers :: Int -> Int
 -- sumNumbers n
@@ -120,6 +121,7 @@ sumNumbers :: Int -> Int
 sumNumbers 0 = 0
 sumNumbers n = n + sumNumbers (n - 1)
 
+-- QUESTION 6
 -- GUARDS
 -- sumSquares :: Int -> Int
 -- sumSquares n
@@ -131,6 +133,7 @@ sumSquares :: Int -> Int
 sumSquares 0 = 0
 sumSquares n = n ^ 2 + sumSquares (n - 1)
 
+-- QUESTION 7
 -- GUARDS
 -- power :: Int -> Int -> Int
 -- power x y
@@ -142,12 +145,14 @@ power :: Int -> Int -> Int
 power x 1 = x 
 power x y = x * power x (y - 1)
 
+-- QUESTION 8
 sumFromTo :: Int -> Int -> Int
 sumFromTo x y
     | x == y = x
     | x > y = 0
     | otherwise = x + sumFromTo (x + 1) y
 
+-- QUESTION 9
 gcd :: Int -> Int -> Int
 gcd x y
     | x == y = x
@@ -155,6 +160,7 @@ gcd x y
     where
         abs a b = if (a - b) < 0 then -(a - b) else a - b
 
+-- QUESTION 10
 intSquareRoot :: Int -> Int
 intSquareRoot n = findRoot n n
 

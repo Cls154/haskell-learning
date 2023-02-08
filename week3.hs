@@ -1,7 +1,9 @@
 -- We don't import '||' from the prelude, so that we can 
 -- define our own version
+{-# LANGUAGE BlockArguments #-}
 
-import Prelude hiding ((||), (&&)) 
+import Prelude hiding ((||), (&&), gcd) 
+import System.Win32 (xBUTTON1)
 
 -- The following line declares the || operator (which we are about to
 -- re-define) to be right associative and to have precedence 2. This
@@ -96,4 +98,68 @@ ifThenElse :: Bool -> Int -> Int -> Int
 ifThenElse True x _ = x
 ifThenElse False _ y = y
 
-daysInMonth :: 
+daysInMonth :: Int -> Int
+daysInMonth 2 = 28
+daysInMonth 4 = 30
+daysInMonth 6 = 30
+daysInMonth 9 = 30
+daysInMonth 11 = 30
+daysInMonth _ = 31
+
+validDate :: Int -> Int -> Bool
+validDate day month = day <= daysInMonth month
+
+-- GUARDS
+-- sumNumbers :: Int -> Int
+-- sumNumbers n
+--     | n <= 0 = n
+--     | otherwise = n + sumNumbers (n - 1)
+
+-- PATTERN MATCHING
+sumNumbers :: Int -> Int
+sumNumbers 0 = 0
+sumNumbers n = n + sumNumbers (n - 1)
+
+-- GUARDS
+-- sumSquares :: Int -> Int
+-- sumSquares n
+--     | n <= 0 = n
+--     | otherwise = n ^ 2 + sumSquares (n - 1)
+
+-- PATTERN MATCHING
+sumSquares :: Int -> Int
+sumSquares 0 = 0
+sumSquares n = n ^ 2 + sumSquares (n - 1)
+
+-- GUARDS
+-- power :: Int -> Int -> Int
+-- power x y
+--     | y == 1 = x
+--     | otherwise = x * power x (y - 1)
+
+-- PATTERN MATCHING
+power :: Int -> Int -> Int
+power x 1 = x 
+power x y = x * power x (y - 1)
+
+sumFromTo :: Int -> Int -> Int
+sumFromTo x y
+    | x == y = x
+    | x > y = 0
+    | otherwise = x + sumFromTo (x + 1) y
+
+gcd :: Int -> Int -> Int
+gcd x y
+    | x == y = x
+    | otherwise = if x < y then gcd x (abs x y) else gcd y (abs x y)
+    where
+        abs a b = if (a - b) < 0 then -(a - b) else a - b
+
+intSquareRoot :: Int -> Int
+intSquareRoot n = findRoot n n
+
+findRoot :: Int -> Int -> Int
+findRoot x y 
+    | x * x == y = x
+    | (x + 1) * (x + 1) > y && x * x < y = x
+    | otherwise = findRoot (x - 1) y 

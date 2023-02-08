@@ -108,7 +108,7 @@ validDate day month = day <= monthDays
       | month == 6 = 30
       | month == 9 = 30
       | month == 11 = 30
-      | otheriwse = 31
+      | otherwise = 31
 
 -- QUESTION 8
 daysInMonth :: Int -> Int -> Int

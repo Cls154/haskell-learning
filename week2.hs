@@ -75,44 +75,47 @@ taxiFares x = 2.20 + addKm x
   where
     addKm km
       | km <= 10 = fromIntegral km * 0.5
-      | otherwise = (10 * 0.5) + ((fromIntegral km - 10) * 0.3)
+      | otherwise = 5 + ((fromIntegral km - 10) * 0.3)
 
 -- QUESTION 6
+-- howManyAboveAverage :: Int -> Int -> Int -> Int
+-- howManyAboveAverage x y z
+--   | fromIntegral x <= calcAvg x y z && fromIntegral y <= calcAvg x y z && fromIntegral z <= calcAvg x y z = 0
+--   | fromIntegral x > calcAvg x y z && fromIntegral y > calcAvg x y z && fromIntegral z > calcAvg x y z = 3
+--   | (fromIntegral x > calcAvg x y z && fromIntegral y > calcAvg x y z  && fromIntegral z < calcAvg x y z) 
+--     || (fromIntegral x > calcAvg x y z && fromIntegral z > calcAvg x y z  && fromIntegral y < calcAvg x y z) 
+--     || (fromIntegral y > calcAvg x y z && fromIntegral z > calcAvg x y z  && fromIntegral x < calcAvg x y z) = 2
+--   | otherwise = 1
+--   where
+--     calcAvg x y z = fromIntegral (x + y + z) / 3
+
 howManyAboveAverage :: Int -> Int -> Int -> Int
 howManyAboveAverage x y z
-  | fromIntegral x <= calcAvg x y z && fromIntegral y <= calcAvg x y z && fromIntegral z <= calcAvg x y z = 0
-  | fromIntegral x > calcAvg x y z && fromIntegral y > calcAvg x y z && fromIntegral z > calcAvg x y z = 3
-  | (fromIntegral x > calcAvg x y z && fromIntegral y > calcAvg x y z  && fromIntegral z < calcAvg x y z) 
-    || (fromIntegral x > calcAvg x y z && fromIntegral z > calcAvg x y z  && fromIntegral y < calcAvg x y z) 
-    || (fromIntegral y > calcAvg x y z && fromIntegral z > calcAvg x y z  && fromIntegral x < calcAvg x y z) = 2
+  | x == y && y == z = 3
+  | f x > avg && f y > avg || f x > avg && f z > avg || f y > avg && f z > avg = 2 
   | otherwise = 1
   where
-    calcAvg x y z = fromIntegral (x + y + z) / 3
+    avg = fromIntegral (x + y + z) / 3
+    f a = fromIntegral a
 
 -- QUESTION 7
 validDate :: Int -> Int -> Bool
 validDate day month = day <= monthDays
   where
     monthDays
-      | month == 1 = 31
       | month == 2 = 28
-      | month == 3 = 31
       | month == 4 = 30
-      | month == 5 = 31
       | month == 6 = 30
-      | month == 7 = 31
-      | month == 8 = 30
-      | month == 9 = 31
-      | month == 10 = 30
-      | month == 11 = 31
-      | month == 12 = 30
+      | month == 9 = 30
+      | month == 11 = 30
+      | otheriwse = 31
 
 -- QUESTION 8
 daysInMonth :: Int -> Int -> Int
 daysInMonth month year
       | month ==  2 = if mod year 4 == 0 then 29 else 28
-      | even month = 30
-      | otherwise = 31
+      | month < 8 = if even month then 30 else 31
+      | otherwise = if even month then 31 else 30
 
 -- QUESTION 9
 {-

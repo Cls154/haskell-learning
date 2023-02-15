@@ -107,7 +107,7 @@ daysInMonth 11 = 30
 daysInMonth _ = 31
 
 validDate :: Int -> Int -> Bool
-validDate day month = day <= daysInMonth month
+validDate day month = day <= daysInMonth month && ?? && ?? && ??
 
 -- QUESTION 5
 -- GUARDS
@@ -142,13 +142,13 @@ sumSquares n = n ^ 2 + sumSquares (n - 1)
 
 -- PATTERN MATCHING
 power :: Int -> Int -> Int
-power x 1 = x 
+power x 0 = 1 
 power x y = x * power x (y - 1)
 
 -- QUESTION 8
 sumFromTo :: Int -> Int -> Int
 sumFromTo x y
-    | x == y = x
+  --  | x == y = x
     | x > y = 0
     | otherwise = x + sumFromTo (x + 1) y
 
@@ -156,9 +156,9 @@ sumFromTo x y
 gcd :: Int -> Int -> Int
 gcd x y
     | x == y = x
-    | otherwise = if x < y then gcd x (abs x y) else gcd y (abs x y)
-    where
-        abs a b = if (a - b) < 0 then -(a - b) else a - b
+    | otherwise = if x < y then gcd x (y - x) else gcd y (x - y)
+   -- where
+    --    abs a b = if (a - b) < 0 then -(a - b) else a - b
 
 -- QUESTION 10
 intSquareRoot :: Int -> Int
@@ -166,6 +166,6 @@ intSquareRoot n = findRoot n n
 
 findRoot :: Int -> Int -> Int
 findRoot x y 
-    | x * x == y = x
+    | x * x == y = x       -- <=    means can delete next line
     | (x + 1) * (x + 1) > y && x * x < y = x
     | otherwise = findRoot (x - 1) y 

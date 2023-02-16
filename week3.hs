@@ -107,7 +107,7 @@ daysInMonth 11 = 30
 daysInMonth _ = 31
 
 validDate :: Int -> Int -> Bool
-validDate day month = day <= daysInMonth month && ?? && ?? && ??
+validDate day month = day <= daysInMonth month -- && ?? && ?? && ??
 
 -- QUESTION 5
 -- GUARDS

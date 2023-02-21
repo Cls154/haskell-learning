@@ -54,11 +54,16 @@ mergeLists (x:xs) (y:ys)
     | x <= y = x : mergeLists xs (y:ys)
     | otherwise = y : mergeLists (x:xs) ys
 
+-- ******************** 
+-- ANSWERS BEGIN HERE
+-- ******************** 
 
+-- QUESTION 1
 headPlusOne :: [Int] -> Int
 headPlusOne [] = -1
 headPlusOne (x:xs) = x + 1
 
+-- QUESTION 2
 removeSecond :: [a] -> [a]
 removeSecond [] = []
 removeSecond [x] = [x]
@@ -68,27 +73,33 @@ duplicateHead :: [a] -> [a]
 duplicateHead [] = []
 duplicateHead (x:xs) = x : x : xs
 
+-- QUESTION 3
 rotate :: [a] -> [a]
 rotate [] = []
 rotate [x] = [x]
 rotate (x : y : xs) = y : x : xs 
 
+-- QUESTION 4
 listLength :: [a] -> Int
 listLength [] = 0
 listLength (x:xs) = 1 + listLength xs
 
+-- QUESTION 5
 multAll :: [Int] -> Int
 multAll [] = 1
 multAll (x:xs) = x * multAll xs
 
+-- QUESTION 6
 andAll :: [Bool] -> Bool
 andAll [] = True
 andAll (x:xs) = x && andAll xs
 
+-- QUESTION 7
 orAll :: [Bool] -> Bool
 orAll [] = False
 orAll (x:xs) = x || orAll xs
 
+-- QUESTION 8
 countIntegers :: Int -> [Int] -> Int
 -- countIntegers _ [] = 0
 -- countIntegers x (y:ys)
@@ -96,12 +107,14 @@ countIntegers :: Int -> [Int] -> Int
 --     | otherwise = countIntegers x ys
 countIntegers x ys = sum [1 | y <- ys, x == y]
 
+-- QUESTION 9
 removeAll :: Int -> [Int] -> [Int]
 removeAll _ [] = []
 removeAll x (y:ys)
     | x == y = removeAll x ys
     | otherwise = y : removeAll x ys 
 
+-- QUESTION 10
 removeAllButFirst :: Int -> [Int] -> [Int]
 removeAllButFirst x (y:ys)
     | x == y = y : removeAll x ys
@@ -121,6 +134,8 @@ testData =
         ("Sue", 71)
     ]
 
+
+-- QUESTION 11
 listMarks :: String -> [StudentMark] -> [Int]
 -- listMarks _ [] = []
 -- listMarks str (x:xs) 
@@ -128,11 +143,13 @@ listMarks :: String -> [StudentMark] -> [Int]
 --     | otherwise = listMarks str xs
 listMarks str stmks = [mk | (st, mk) <- stmks, st == str] 
 
+-- QUESTION 12
 sorted :: [Int] -> Bool
 sorted [] = True
 sorted [x] = True
 sorted (x:y:xs) = x <= y && sorted (y:xs)
 
+-- QUESTION 13
 prefix :: [Int] -> [Int] -> Bool
 prefix [] [] = True
 prefix [] _ = True
@@ -140,6 +157,7 @@ prefix (x:xs) (y:ys)
     | x == y = prefix xs ys
     | otherwise = False
 
+-- QUESTION 14
 subSequence :: [Int] -> [Int] -> Bool
 subSequence (x:xs) (y:ys)
     | x == y = prefix xs ys

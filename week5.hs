@@ -116,6 +116,7 @@ removeAll x (y:ys)
 
 -- QUESTION 10
 removeAllButFirst :: Int -> [Int] -> [Int]
+removeAllButFirst x [] = []
 removeAllButFirst x (y:ys)
     | x == y = y : removeAll x ys
     | otherwise = y : removeAllButFirst x ys
@@ -145,14 +146,15 @@ listMarks str stmks = [mk | (st, mk) <- stmks, st == str]
 
 -- QUESTION 12
 sorted :: [Int] -> Bool
-sorted [] = True
-sorted [x] = True
-sorted (x:y:xs) = x <= y && sorted (y:xs)
+-- sorted [] = True
+-- sorted [x] = True
+-- sorted (x:y:xs) = x <= y && sorted (y:xs)
+sorted xs = andAll [x <= y | (x, y) <- zip xs (tail xs)]
 
 -- QUESTION 13
 prefix :: [Int] -> [Int] -> Bool
-prefix [] [] = True
 prefix [] _ = True
+prefix _ [] = True
 prefix (x:xs) (y:ys)
     | x == y = prefix xs ys
     | otherwise = False

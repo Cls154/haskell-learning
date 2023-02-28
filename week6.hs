@@ -53,5 +53,26 @@ mult10 = map (*10)
 onlyLowerCase :: String -> String
 onlyLowerCase = filter isLower
 
+orAll :: [Bool] -> Bool
+orAll xs = foldr (||) False xs
 
+sumSquares :: [Int] -> Int
+sumSquares = foldr (+) 0 . (map (^2))
 
+zeroToTen :: [Int] -> [Int]
+zeroToTen xs = filter (\x -> (x <= 10) && (x >= 0)) xs
+
+squareRoots :: [Float] -> [Float]
+-- squareRoots xs = map (\x -> sqrt x) ((filter (\x -> x >= 0) xs))
+squareRoots = map (sqrt) . (filter (>0))
+
+countBetween :: Float -> Float -> [Float] -> Int
+countBetween a b xs = length (filter (\x -> x >= a && x <= b) xs)
+
+alwaysPositive :: (Float -> Float) -> [Float] -> Bool
+alwaysPositive f = andAll . map ((>0) . f)
+-- alwaysPositive f xs = andAll (map ((>0) . f) xs)
+-- alwaysPositive f xs = length (filter (>0) (map f xs)) == length xs
+
+productSquareRoots :: [Float] -> Float
+productSquareRoots = foldr (*) 1 . (map (sqrt) . (filter (>0)))

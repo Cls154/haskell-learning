@@ -4,6 +4,9 @@
 
 import Data.Char
 import GHC.Float (fromRat'')
+import System.Directory (removeDirectoryRecursive)
+
+import Prelude hiding (reverse) 
 
 twice :: (Int -> Int) -> Int -> Int
 twice f x = f (f x)
@@ -47,32 +50,68 @@ updatePositivesOnly :: (Float -> Float) -> [Float] -> [Float]
 --   | otherwise = x : updatePositivesOnly f xs
 updatePositivesOnly f = map (\x -> if x > 0 then f x else x)
 
-mult10 :: [Int] -> [Int]
-mult10 = map (*10)
+-- mult10 :: [Int] -> [Int]
+-- mult10 = map (*10)
 
-onlyLowerCase :: String -> String
-onlyLowerCase = filter isLower
+-- onlyLowerCase :: String -> String
+-- onlyLowerCase = filter isLower
 
 orAll :: [Bool] -> Bool
-orAll xs = foldr (||) False xs
+orAll = foldr (||) False
 
 sumSquares :: [Int] -> Int
 sumSquares = foldr (+) 0 . (map (^2))
 
-zeroToTen :: [Int] -> [Int]
-zeroToTen xs = filter (\x -> (x <= 10) && (x >= 0)) xs
+-- zeroToTen :: [Int] -> [Int]
+-- zeroToTen = filter (<=10) . filter (>=0)
 
 squareRoots :: [Float] -> [Float]
 -- squareRoots xs = map (\x -> sqrt x) ((filter (\x -> x >= 0) xs))
-squareRoots = map (sqrt) . (filter (>0))
+squareRoots = map sqrt . filter (>0)
 
 countBetween :: Float -> Float -> [Float] -> Int
 countBetween a b xs = length (filter (\x -> x >= a && x <= b) xs)
 
-alwaysPositive :: (Float -> Float) -> [Float] -> Bool
-alwaysPositive f = andAll . map ((>0) . f)
+-- alwaysPositive :: (Float -> Float) -> [Float] -> Bool
+-- alwaysPositive f = andAll . map ((>0) . f)
 -- alwaysPositive f xs = andAll (map ((>0) . f) xs)
 -- alwaysPositive f xs = length (filter (>0) (map f xs)) == length xs
 
+-- productSquareRoots :: [Float] -> Float
+-- productSquareRoots = foldr (*) 1 . (map (sqrt) . (filter (>0)))
+
+removeFirst :: (a -> Bool) -> [a] -> [a]
+removeFirst _ [] = []
+removeFirst f (x:xs) 
+  | f x = xs
+  | otherwise = x : removeFirst f xs
+
+-- removeLast :: (a -> Bool) -> [a] -> [a]
+-- removeLast _ [] = []
+-- removeLast f (x:xs) = x : reverse (removeFirst f (reverse xs))
+
+zeroToTen :: [Int] -> [Int]
+zeroToTen = filter (\x -> (x <= 10) && (x >= 0))
+
+mult10 :: [Int] -> [Int]
+mult10 = foldr (\x xs -> x * 10 : xs) []
+
+onlyLowerCase :: String -> String
+onlyLowerCase = foldr (\x xs -> if isLower x then x : xs else xs) []
+
+alwaysPositive :: (Float -> Float) -> [Float] -> Bool
+alwaysPositive f xs = foldr (\x acc -> f x > 0 && acc) True xs
+
 productSquareRoots :: [Float] -> Float
-productSquareRoots = foldr (*) 1 . (map (sqrt) . (filter (>0)))
+productSquareRoots xs = foldr (\x acc -> if x > 0 then sqrt x * acc else acc) 1 xs
+
+reverse :: [a] -> [a]
+reverse = foldr (\x acc -> acc ++ [x]) []
+
+
+-- updatePositivesOnly :: (Float -> Float) -> [Float] -> [Float]
+-- -- updatePositivesOnly _ [] = []
+-- -- updatePositivesOnly f (x : xs)
+-- --   | x > 0 = f x : updatePositivesOnly f xs
+-- --   | otherwise = x : updatePositivesOnly f xs
+-- updatePositivesOnly f = map (\x -> if x > 0 then f x else x)

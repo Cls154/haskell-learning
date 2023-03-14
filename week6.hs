@@ -67,7 +67,7 @@ sumSquares = foldr (+) 0 . (map (^2))
 
 squareRoots :: [Float] -> [Float]
 -- squareRoots xs = map (\x -> sqrt x) ((filter (\x -> x >= 0) xs))
-squareRoots = map sqrt . filter (>0)
+squareRoots = map sqrt . filter (>=0)
 
 countBetween :: Float -> Float -> [Float] -> Int
 countBetween a b xs = length (filter (\x -> x >= a && x <= b) xs)

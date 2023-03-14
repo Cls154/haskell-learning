@@ -40,8 +40,7 @@ data Building = Name String |
                 deriving (Show)
 
 -- Binary tree algebraic type
-data Tree = Null | 
-     Node Int Tree Tree
+data Tree = Null | Node Int Tree Tree
      deriving (Show)
 
 -- Binary tree test data
@@ -105,3 +104,52 @@ updatePriceAt index amount (c : cs) = c : updatePriceAt (index - 1) amount cs
 
 updatePrice :: Float -> Car -> Car
 updatePrice newPrice (Car name engine _) = Car name engine newPrice
+
+
+data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec 
+     deriving (Show, Eq)
+data Season = Winter | Summer | Autumn | Spring
+     deriving (Show, Eq)
+
+season :: Month -> Season
+season month 
+     | month `elem` [Dec, Jan, Feb] = Winter
+     | month `elem` [Mar, Apr, May] = Spring
+     | month `elem` [Jun, Jul, Aug] = Summer
+     | otherwise = Autumn
+
+numberOfDays :: Month -> Int -> Int
+numberOfDays month year
+     | month == Feb && mod year 4 == 0 = 29
+     | month == Feb = 28
+     | month `elem` [Apr, Jun, Sep, Nov] = 30
+     | otherwise = 31
+
+type XCoord = Float
+type YCoord = Float
+
+data Point = Point XCoord YCoord
+     deriving(Show)
+
+data PositionedShape = PositionedCircle Float Point | PositionedRectangle Float Float Point
+     deriving(Show)
+
+myCirc :: PositionedShape
+myCirc = PositionedCircle 5.0 (Point 10.0 20.0)
+
+myRect :: PositionedShape
+myRect = PositionedRectangle 10.0 20.0 (Point 10.0 20.0)
+
+move :: PositionedShape -> Float -> Float -> PositionedShape
+move (PositionedCircle r (Point x y)) dx dy = PositionedCircle r (Point (x + dx) (y + dy))
+move (PositionedRectangle w h (Point x y)) dx dy = PositionedRectangle w h (Point (x + dx) (y + dy))
+
+numberOfNodes :: Tree -> Int
+numberOfNodes Null = 0
+numberOfNodes (Node _ left right) = 1 + numberOfNodes left + numberOfNodes right
+
+isMember :: Int -> Tree -> Bool
+isMember x (Node n left right)
+     | x == n = True
+     | (isMember x left) (isMember x right)
+     | otherwise = False 

@@ -65,16 +65,16 @@ type HorsePower = Int
 type Price = Float
 
 data EngineType = Petrol | Diesel | Electric
-     deriving (Show, Eq)
+     deriving (Show, Eq, Ord, Read)
 
 data Engine = Engine EngineType HorsePower
-     deriving (Show)
+     deriving (Show, Eq, Ord, Read)
 
 data CarName = CName Make Model
-     deriving (Show)
+     deriving (Show, Eq, Ord, Read)
 
 data Car = Car CarName Engine Price
-     deriving (Show)
+     deriving (Show, Eq, Ord, Read)
 
 testCars :: [Car]
 testCars =
@@ -98,39 +98,44 @@ filterByMake :: String -> [Car] -> [Car]
 filterByMake manufacturer = filter (\(Car (CName make _) _ _) -> make == manufacturer)
 
 updatePriceAt :: Int -> Float -> [Car] -> [Car]
-updatePriceAt _ _ [] = []
-updatePriceAt 0 amount (c : cs) = updatePrice amount c : cs
-updatePriceAt index amount (c : cs) = c : updatePriceAt (index - 1) amount cs
+-- updatePriceAt _ _ [] = []
+-- updatePriceAt 0 amount (c : cs) = updatePrice amount c : cs
+-- updatePriceAt index amount (c : cs) = c : updatePriceAt (index - 1) amount cs
+
+updatePriceAt index price cars = take index cars ++ [newCar] ++ drop (index + 1) cars
+     where
+          newCar = updatePrice price (cars !! index)
+
 
 updatePrice :: Float -> Car -> Car
 updatePrice newPrice (Car name engine _) = Car name engine newPrice
 
-
+-- QUESTION 1
 data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec 
      deriving (Show, Eq)
 data Season = Winter | Summer | Autumn | Spring
      deriving (Show, Eq)
-
+-- QUESTION 2
 season :: Month -> Season
 season month 
      | month `elem` [Dec, Jan, Feb] = Winter
      | month `elem` [Mar, Apr, May] = Spring
      | month `elem` [Jun, Jul, Aug] = Summer
      | otherwise = Autumn
-
+-- QUESTION 3
 numberOfDays :: Month -> Int -> Int
 numberOfDays month year
      | month == Feb && mod year 4 == 0 = 29
      | month == Feb = 28
      | month `elem` [Apr, Jun, Sep, Nov] = 30
      | otherwise = 31
-
+-- QUESTION 4
 type XCoord = Float
 type YCoord = Float
-
+-- QUESTION 5
 data Point = Point XCoord YCoord
      deriving(Show)
-
+-- QUESTION 6
 data PositionedShape = PositionedCircle Float Point | PositionedRectangle Float Float Point
      deriving(Show)
 
@@ -143,13 +148,47 @@ myRect = PositionedRectangle 10.0 20.0 (Point 10.0 20.0)
 move :: PositionedShape -> Float -> Float -> PositionedShape
 move (PositionedCircle r (Point x y)) dx dy = PositionedCircle r (Point (x + dx) (y + dy))
 move (PositionedRectangle w h (Point x y)) dx dy = PositionedRectangle w h (Point (x + dx) (y + dy))
-
+-- QUESTION 7
 numberOfNodes :: Tree -> Int
 numberOfNodes Null = 0
 numberOfNodes (Node _ left right) = 1 + numberOfNodes left + numberOfNodes right
-
+-- QUESTION 8
 isMember :: Int -> Tree -> Bool
-isMember x (Node n left right)
-     | x == n = True
-     | (isMember x left) (isMember x right)
-     | otherwise = False 
+isMember _ Null = False
+isMember x (Node n left right) = x == n || isMember x left || isMember x right
+-- QUESTION 9
+leaves :: Tree -> [Int]
+leaves Null = []
+leaves (Node x Null Null) = [x]
+leaves (Node _ left right) = leaves left ++ leaves right
+-- QUESTION 10
+inOrder :: Tree -> [Int]
+inOrder Null = []
+inOrder (Node x left right) = inOrder left ++ [x] ++ inOrder right
+-- QUESTION 11
+insert :: Int -> Tree -> Tree
+insert x Null = Node x Null Null
+insert x (Node n left right)
+     | n > x = Node n (insert x left) right
+     | n < x = Node n left (insert x right)
+     | otherwise = Node n left right
+-- QUESTION 12
+listToSearchTree :: [Int] -> Tree
+listToSearchTree [] = Null
+listToSearchTree (x:xs) = Node x (listToSearchTree (lessThan x xs)) (listToSearchTree (greaterThan x xs))
+
+lessThan :: Int -> [Int] -> [Int]
+lessThan _ [] = []
+lessThan x (y:ys)
+     | x > y = y : lessThan x ys
+     | otherwise = lessThan x ys
+
+greaterThan :: Int -> [Int] -> [Int]
+greaterThan _ [] = []
+greaterThan x (y:ys)
+     | y > x = y : greaterThan x ys
+     | otherwise = greaterThan x ys
+
+binaryTreeSort :: [Int] -> [Int]
+binaryTreeSort xs = inOrder (listToSearchTree xs)
+

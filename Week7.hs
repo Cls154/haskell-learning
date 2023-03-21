@@ -151,5 +151,5 @@ numberOfNodes (Node _ left right) = 1 + numberOfNodes left + numberOfNodes right
 isMember :: Int -> Tree -> Bool
 isMember x (Node n left right)
      | x == n = True
-     | (isMember x left) (isMember x right)
+     | isMember x left) (isMember x right)
      | otherwise = False 

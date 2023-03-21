@@ -83,3 +83,37 @@ addTwoNumbers = do
     let numInt2 = read num2 :: Int
     putStrLn (show numInt1 ++ "+" ++ show numInt2 ++ "=" ++ show (numInt1 + numInt2))
 
+copyFile :: IO ()
+copyFile = do
+    putStr "Enter the filename to copy including the extension: "
+    filename <- getLine
+    contents <- readFile filename
+    writeFile ("copy_" ++ filename) contents
+    putStrLn "file has been copied"
+
+buildList :: [String] -> IO ()
+buildList list = do
+    putStr "Enter a line: "
+    listData <- getLine
+    let newList = list ++ [listData]
+    putStrLn ("List is now " ++ (show newList))
+    buildList newList
+
+listBuilder :: IO ()
+listBuilder = buildList []
+
+readIntegers :: Int -> Int -> IO Int
+readIntegers 0 sum = return sum
+readIntegers n sum = do
+    input <- getLine
+    let number = read input :: Int
+    readIntegers (n-1) (sum + number)
+
+sumIntegers :: IO ()
+sumIntegers = do
+    putStr "Enter the number of integers to sum: "
+    nInput <- getLine
+    let n = read nInput :: Int
+    sum <- readIntegers n 0
+    putStrLn ("Sum of integers: " ++ show sum)
+

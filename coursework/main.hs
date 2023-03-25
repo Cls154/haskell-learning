@@ -1,9 +1,7 @@
 import Data.List
 --
 -- MATHFUN
--- Template for the Haskell assignment program (replace this comment)
--- Add your student number
---
+-- up2056835
 
 
 --
@@ -22,28 +20,26 @@ data City = City Name Location Population
   deriving(Show)
 
 testData :: [City]
--- testData = 
---   [
---     City "Amsterdam" (Location 52 5)  [1158, 1149, 1140, 1132],
---     City "Athens"    (Location 38 24) [3153, 3153, 3154, 3156],
---     City "Berlin"    (Location 53 13) [3567, 3562, 3557, 3552],
---     City "Bucharest" (Location 44 26) [1794, 1803, 1812, 1821],
---     City "London"    (Location 52  0) [9426, 9304, 9177, 9046],
---     City "Madrid"    (Location 40  4) [6669, 6618, 6559, 6497],
---     City "Paris"     (Location 49  2) [11079, 11017, 10958, 10901],
---     City "Rome"      (Location 42 13) [4278, 4257, 4234, 4210],
---     City "Vienna"    (Location 48 16) [1945, 1930, 1915, 1901],
---     City "Warsaw"    (Location 52 21) [1790, 1783, 1776, 1768]
---   ]
 testData = 
   [
-    City "Bucharest" (Location 44 26) [1794, 1803, 1812, 1821],
+    City "Amsterdam" (Location 52 5)  [1158, 1149, 1140, 1132],
     City "Athens"    (Location 38 24) [3153, 3153, 3154, 3156],
+    City "Berlin"    (Location 53 13) [3567, 3562, 3557, 3552],
+    City "Bucharest" (Location 44 26) [1794, 1803, 1812, 1821],
     City "London"    (Location 52  0) [9426, 9304, 9177, 9046],
-    City "Rome"      (Location 42 13) [4278, 4257, 4234, 4210]
+    City "Madrid"    (Location 40  4) [6669, 6618, 6559, 6497],
+    City "Paris"     (Location 49  2) [11079, 11017, 10958, 10901],
+    City "Rome"      (Location 42 13) [4278, 4257, 4234, 4210],
+    City "Vienna"    (Location 48 16) [1945, 1930, 1915, 1901],
+    City "Warsaw"    (Location 52 21) [1790, 1783, 1776, 1768]
   ]
-
-
+-- testData = 
+--   [
+--     City "Bucharest" (Location 44 26) [1794, 1803, 1812, 1821],
+--     City "Athens"    (Location 38 24) [3153, 3153, 3154, 3156],
+--     City "London"    (Location 52  0) [9426, 9304, 9177, 9046],
+--     City "Rome"      (Location 42 13) [4278, 4257, 4234, 4210]
+--   ]
 
 --
 --  Your functional code goes here
@@ -133,7 +129,63 @@ citiesToString (City name (Location north east) population : cn) = name ++ " " +
 updatePopulations :: [City] -> [Int] -> [City]
 updatePopulations [] _ = []
 updatePopulations (City name location population : cn) (x : xs) = City name location (x : population) : updatePopulations cn xs
-  
+
+
+
+-- **********************
+-- ***** QUESTION 5 *****
+-- **********************
+
+-- Add a new city (with a name and coordinates, and a population list of length equal to
+-- those of the other cities) to the list, preserving its alphabetical ordering.
+
+-- RUN TO TEST SOLUTION TO 5
+-- putStr (citiesToString (addCity testData (City "Stockholm" (Location 59 18) [1657, 1633, 1608, 1583])))
+
+-- SOLUTION 5
+addCity :: [City] -> City -> [City]
+addCity cities newCity = sortOn cityName (cities ++ [newCity])
+  where
+    cityName (City name _ _) = name
+
+
+
+-- **********************
+-- ***** QUESTION 6 *****
+-- **********************
+
+-- For a given city name, return a list of annual population growth figures (in thousands)
+-- for that city (i.e., the result list should begin with the increase from last year’s figure to
+-- this year’s; the second value should give the increase from two years ago to last year,
+-- etc.). (The list will include negative values for shrinking populations.)
+
+-- RUN TO TEST SOLUTION TO 6
+-- annualGrowth testData "Athens"
+
+-- SOLUTION 6
+annualGrowth :: [City] -> Name -> [Int]
+annualGrowth (City name location population : cn) inputName
+  | name == inputName = [thousands (yrA - yrB) | (yrA, yrB) <- split population]
+  | otherwise = annualGrowth cn inputName
+    where
+      split (fst : scd : rest) = if null rest then [(fst, scd)] else (fst, scd) : split (scd : rest)
+      thousands x = x * 1000
+
+
+
+-- **********************
+-- ***** QUESTION 7 *****
+-- **********************
+
+-- Given a location and a number, return the name of the closest city with a population
+-- bigger than the number, or “no city” if there are no such cities; use Pythagoras’ theorem
+-- to calculate the distance between locations (i.e. assume the world is flat!)
+
+-- RUN TO TEST SOLUTION TO 7
+
+-- SOLUTION 7
+
+
 --
 --  Demo
 -- *********************************

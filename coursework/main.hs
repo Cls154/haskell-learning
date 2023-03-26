@@ -1,4 +1,5 @@
 import Data.List
+import System.Win32 (xBUTTON1)
 --
 -- MATHFUN
 -- up2056835
@@ -182,8 +183,22 @@ annualGrowth (City name location population : cn) inputName
 -- to calculate the distance between locations (i.e. assume the world is flat!)
 
 -- RUN TO TEST SOLUTION TO 7
+-- closestCity (citiesFromPopulation testData 5000) (Location 45 8)
 
 -- SOLUTION 7
+closestCity :: [City] -> Location -> String
+closestCity [City name (Location north east) population] _ = name ++ " " ++ show north ++ "N" ++ " " ++ show east ++ "E" ++ " " ++ show (fromIntegral (head population) / 1000) ++ "M"
+closestCity (City name1 (Location north1 east1) pop1 : City name2 (Location north2 east2) pop2 : cn) (Location x y) 
+  | distance x y north1 east1 < distance x y north2 east2 = closestCity (City name1 (Location north1 east1) pop1 : cn) (Location x y)
+  | otherwise = closestCity (City name2 (Location north2 east2) pop2 : cn) (Location x y)
+    where
+      distance x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
+
+citiesFromPopulation :: [City] -> Int -> [City]
+citiesFromPopulation [] _ = []
+citiesFromPopulation (City name location pop : cn) x
+  | head pop > x = City name location pop : citiesFromPopulation cn x
+  | otherwise = citiesFromPopulation cn x
 
 
 --

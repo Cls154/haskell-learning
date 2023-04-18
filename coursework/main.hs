@@ -1,5 +1,7 @@
 import Data.List
-import Graphics.Win32 (restoreDC)
+import Text.Printf
+import System.IO
+
 --
 -- MATHFUN
 -- up2056835
@@ -13,12 +15,12 @@ type North = Int
 type East = Int
 
 data Location = Location North East
-  deriving(Show)
+  deriving(Show, Eq, Read)
 
 type Population = [Int]
 
 data City = City Name Location Population
-  deriving(Show)
+  deriving(Show, Read)
 
 testData :: [City]
 testData = 
@@ -42,90 +44,86 @@ testData =
 getCityName :: City -> Name
 getCityName (City name _ _) = name
 
--- ***** QUESTION 1 *****
--- cityNames testData
-cityNames :: [City] -> [String]
-cityNames [] = []
-cityNames (City name _ _ : cn) = name : cityNames cn
+getCityPopulation :: City -> Population
+getCityPopulation (City _ _ population) = population
 
+getCityLocation :: City -> Location
+getCityLocation (City _ loc _) = loc
+
+getNorth :: Location -> North
+getNorth (Location north _) = north
+
+getEast :: Location -> East
+getEast (Location _ east) = east
+
+-- ***** QUESTION 1 *****
 allCityNames :: [City] -> [String]
 allCityNames [] = []
 allCityNames cities = map getCityName cities
 
-
 -- ***** QUESTION 2 *****
--- citysPopulationOnYear testData "Berlin" 1
-citysPopulationOnYear :: [City] -> Name -> Int -> String
-citysPopulationOnYear (City name location population : cn) inputName x 
-  | name == inputName = yearsPopulation (City name location population) x 
-  | otherwise = citysPopulationOnYear cn inputName x
-  where
-    yearsPopulation (City _ _ population) x 
-      | x >= 4 = "No Data"
-      | otherwise = show (fromIntegral (population !! x) / 1000) ++ "m"
-
-getCityByName :: [City] -> Name -> [City]
-getCityByName [] _ = []
+getCityByName :: [City] -> Name -> City
+getCityByName [] _ = City "" (Location 0 0) []
 getCityByName (city:rest) name =
   if getCityName city == name
-    then [city]
+    then city
   else getCityByName rest name
 
-getCityPopulation :: City -> Population
-getCityPopulation (City _ _ population) = population
-
-getYearPopulation :: [City] -> Int -> String
-getYearPopulation (city:rest) year = 
+getYearPopulation :: City -> Int -> String
+getYearPopulation city year = 
   if length (getCityPopulation city) < year
     then "No Data"
   else show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m"
--- getDiaryFromTitleDate :: [Diary] -> Title -> Date -> Maybe Diary
--- getDiaryFromTitleDate [] _ _ = Nothing 
--- getDiaryFromTitleDate (Diary title des rev date : rest) inTitle inDate =
---   if inTitle == title && inDate == date 
---     then Just (Diary title des rev date)
---   else getDiaryFromTitleDate rest inTitle inDate
 
 -- ***** QUESTION 3 *****
--- putStr (citiesToString testData)
+formatCity :: City -> String
+formatCity (City name (Location north east) population) =
+  printf "%-10s %-5s %-5s %-9s %s"
+    name
+    (show north ++ "N")
+    (show east ++ "E")
+    (show (fromIntegral (head population) / 1000) ++ "m")
+    (show (fromIntegral (head (tail population)) / 1000) ++ "m")
+
 citiesToString :: [City] -> String
 citiesToString [] = []
-citiesToString (City name (Location north east) population : cn) = name ++ " " ++ showLocation ++ " " ++ showPopulation ++ "\n" ++ citiesToString cn
-  where
-    showLocation = show north ++ "N" ++ " " ++ show east ++ "E"
-    showPopulation = utilPop (head population) ++ " " ++ utilPop (head (tail population))
-    utilPop pop = show (fromIntegral pop / 1000) ++ "m"
+citiesToString (city:rest) = formatCity city ++ "\n" ++ citiesToString rest
 
 -- ***** QUESTION 4 *****
--- putStr (citiesToString (addNewYearsPopulations testData [1200,3200,3600,1800,9500,6800,11100,4300,2000,1800]))
 updatePopulations :: [City] -> [Int] -> [City]
 updatePopulations [] _ = []
-updatePopulations (City name location population : cn) (x : xs) = City name location (x : population) : updatePopulations cn xs
+updatePopulations (City name location population : rest) (x : xs) = 
+  if length (City name location population : rest) == length (x:xs)
+    then City name location (x : population) : updatePopulations rest xs
+  else []
 
 -- ***** QUESTION 5 *****
--- putStr (citiesToString (addCity testData (City "Stockholm" (Location 59 18) [1657, 1633, 1608, 1583])))
 addCity :: [City] -> City -> [City]
-addCity cities newCity = sortOn cityName (cities ++ [newCity])
+addCity cities newCity
+  | getCityName newCity `elem` map getCityName cities = []
+  | getCityLocation newCity `elem` map getCityLocation cities = []
+  | length (getCityPopulation newCity) /= populationLength = []
+  | otherwise = sortOn getCityName (cities ++ [newCity])
   where
-    cityName (City name _ _) = name
+    populationLength = round ((sum [fromIntegral (length pop) | (City _ _ pop) <- cities]) / fromIntegral (length cities))
 
 -- ***** QUESTION 6 *****
--- annualGrowth testData "Athens"
 annualGrowth :: [City] -> Name -> [Int]
-annualGrowth (City name location population : cn) inputName
-  | name == inputName = [thousands (yrA - yrB) | (yrA, yrB) <- split population]
-  | otherwise = annualGrowth cn inputName
+annualGrowth (city : rest) inputName
+  | getCityName city == inputName = [thousands (yrA - yrB) | (yrA, yrB) <- split (getCityPopulation city)]
+  | otherwise = annualGrowth rest inputName
     where
       split (fst : scd : rest) = if null rest then [(fst, scd)] else (fst, scd) : split (scd : rest)
       thousands x = x * 1000
 
 -- ***** QUESTION 7 *****
 -- closestCity (citiesFromPopulation testData 5000) (Location 45 8)
+-- ERROR CHECKS NEEDED HERE AS WELL FOR EXAMPLE WHEN THERE IS NO CLOSEST CITY WITH A POPULATION OF OVER SMTH
 closestCity :: [City] -> Location -> String
-closestCity [City name (Location north east) population] _ = name ++ " " ++ show north ++ "N" ++ " " ++ show east ++ "E" ++ " " ++ show (fromIntegral (head population) / 1000) ++ "M"
-closestCity (City name1 (Location north1 east1) pop1 : City name2 (Location north2 east2) pop2 : cn) (Location x y) 
-  | distance x y north1 east1 < distance x y north2 east2 = closestCity (City name1 (Location north1 east1) pop1 : cn) (Location x y)
-  | otherwise = closestCity (City name2 (Location north2 east2) pop2 : cn) (Location x y)
+closestCity [city] _ = getCityName city ++ " " ++ show (getNorth (getCityLocation city)) ++ "N" ++ " " ++ show (getEast (getCityLocation city)) ++ "E" ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "M"
+closestCity (cityA : cityB : cn) (Location x y) 
+  | distance x y (getNorth (getCityLocation cityA)) (getEast (getCityLocation cityA)) < distance x y (getNorth (getCityLocation cityB)) (getEast (getCityLocation cityB)) = closestCity (cityA : cn) (Location x y)
+  | otherwise = closestCity (cityB : cn) (Location x y)
     where
       distance x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
 
@@ -140,9 +138,9 @@ citiesFromPopulation (City name location pop : cn) x
 --  Demo
 demo :: Int -> IO ()
 demo 1 = do
-  print (cityNames testData)
+  print (allCityNames testData)
 demo 2 = do
-  putStrLn (citysPopulationOnYear testData "Berlin" 1)
+  putStrLn (getYearPopulation (getCityByName testData "Berlin") 1)
 demo 3 = do
   putStr (citiesToString testData)
 demo 4 = do
@@ -184,3 +182,35 @@ writeAt position text = do
 --
 -- Your user interface (and loading/saving) code goes here
 --
+displayMenu :: IO ()
+displayMenu = do
+  putStrLn "Select one of the following options:"
+  putStrLn "1. Display All Citys"
+  putStrLn "2. Return the population of a city x number of years ago"
+  putStrLn "Press any other key to exit"
+
+askForInput :: String -> IO String
+askForInput prompt = do
+  putStrLn prompt
+  getLine
+
+parseCities :: String -> [City]
+parseCities contents = map read (lines contents)
+
+main :: IO ()
+main = do
+  let filename = "cities.txt"
+  contents <- readFile filename 
+  let cities = parseCities contents
+  main2 (return cities)
+
+main2 :: IO [City] -> IO ()
+main2 citiesIO = do
+  cities <- citiesIO
+  displayMenu
+  option <- askForInput "Enter your Choice: "
+  case option of
+    "1" -> do 
+      print (allCityNames cities)
+      main2 (return cities)
+    _ -> return ()

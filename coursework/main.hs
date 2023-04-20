@@ -120,17 +120,17 @@ annualGrowth (city : rest) inputName
 closestCity :: [City] -> Location -> String
 closestCity [] _ = "No closest city"
 closestCity [city] _ = getCityName city ++ " " ++ show (getNorth (getCityLocation city)) ++ "N" ++ " " ++ show (getEast (getCityLocation city)) ++ "E" ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "M"
-closestCity (cityA : cityB : cn) (Location x y) 
-  | distance x y (getNorth (getCityLocation cityA)) (getEast (getCityLocation cityA)) < distance x y (getNorth (getCityLocation cityB)) (getEast (getCityLocation cityB)) = closestCity (cityA : cn) (Location x y)
-  | otherwise = closestCity (cityB : cn) (Location x y)
+closestCity (cityA : cityB : rest) (Location x y) 
+  | distance x y (getNorth (getCityLocation cityA)) (getEast (getCityLocation cityA)) < distance x y (getNorth (getCityLocation cityB)) (getEast (getCityLocation cityB)) = closestCity (cityA : rest) (Location x y)
+  | otherwise = closestCity (cityB : rest) (Location x y)
     where
       distance x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
 
 citiesFromPopulation :: [City] -> Int -> [City]
 citiesFromPopulation [] _ = []
-citiesFromPopulation (City name location pop : cn) x
-  | head pop > x = City name location pop : citiesFromPopulation cn x
-  | otherwise = citiesFromPopulation cn x
+citiesFromPopulation (city : rest) x
+  | head (getCityPopulation city) > x = city : citiesFromPopulation rest x
+  | otherwise = citiesFromPopulation rest x
 
 
 

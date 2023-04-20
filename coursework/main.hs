@@ -41,7 +41,6 @@ testData =
 --
 --  Your functional code goes here
 --
-
 getCityName :: City -> Name
 getCityName (City name _ _) = name
 
@@ -119,6 +118,7 @@ annualGrowth (city : rest) inputName
 
 -- ***** QUESTION 7 *****
 closestCity :: [City] -> Location -> String
+closestCity [] _ = "No closest city"
 closestCity [city] _ = getCityName city ++ " " ++ show (getNorth (getCityLocation city)) ++ "N" ++ " " ++ show (getEast (getCityLocation city)) ++ "E" ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "M"
 closestCity (cityA : cityB : cn) (Location x y) 
   | distance x y (getNorth (getCityLocation cityA)) (getEast (getCityLocation cityA)) < distance x y (getNorth (getCityLocation cityB)) (getEast (getCityLocation cityB)) = closestCity (cityA : cn) (Location x y)
@@ -151,6 +151,8 @@ demo 6 = do
 demo 7 = do
   print (closestCity (citiesFromPopulation testData 5000) (Location 45 8))
 demo _ = return ()
+
+
 
 --
 -- Screen Utilities (use these to do the population map)
@@ -186,27 +188,8 @@ writeAt position text = do
 --
 -- Your user interface (and loading/saving) code goes here
 --
-displayMenu :: IO ()
-displayMenu = do
-  putStrLn ""
-  putStrLn "Select one of the following options:"
-  putStrLn "1. Display all citys"
-  putStrLn "2. Return the population of a city x number of years ago"
-  putStrLn "3. Display all city data"
-  putStrLn "4. Update all city populations"
-  putStrLn "5. Add a new city"
-  putStrLn "6. Check a cities annual growth"
-  putStrLn "7. Find closest city above a certain population"
-  putStrLn "Press any other key to save and exit"
 
-askForInput :: String -> IO String
-askForInput prompt = do
-  putStrLn prompt
-  getLine
-
-parseCities :: String -> [City]
-parseCities contents = map read (lines contents)
-
+-- Modified Core Functionality Function, specfically for the UI
 getCityByNameIO :: [City] -> Name -> Maybe City
 getCityByNameIO [] _ = Nothing
 getCityByNameIO (city:rest) name =
@@ -236,11 +219,30 @@ addCityIO cities newCity
   where
     populationLength = round ((sum [fromIntegral (length pop) | (City _ _ pop) <- cities]) / fromIntegral (length cities))
 
+-- User Interface
+displayMenu :: IO ()
+displayMenu = do
+  putStrLn ""
+  putStrLn "Select one of the following options:"
+  putStrLn "1. Display all citys"
+  putStrLn "2. Return the population of a city x number of years ago"
+  putStrLn "3. Display all city data"
+  putStrLn "4. Update all city populations"
+  putStrLn "5. Add a new city"
+  putStrLn "6. Check a cities annual growth"
+  putStrLn "7. Find closest city above a certain population"
+  putStrLn "Press any other key to save and exit"
+
+askForInput :: String -> IO String
+askForInput prompt = do
+  putStrLn prompt
+  getLine
+
 main :: IO ()
 main = do
   let filename = "cities.txt"
   contents <- readFile filename 
-  let cities = parseCities contents
+  let cities = map read (lines contents)
   main2 filename (return cities)
 
 main2 :: FilePath -> IO [City] -> IO ()

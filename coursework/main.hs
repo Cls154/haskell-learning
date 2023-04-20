@@ -1,5 +1,6 @@
 import Data.List
 import Text.Printf
+import Text.Read
 import System.IO
 
 --
@@ -117,8 +118,6 @@ annualGrowth (city : rest) inputName
       thousands x = x * 1000
 
 -- ***** QUESTION 7 *****
--- closestCity (citiesFromPopulation testData 5000) (Location 45 8)
--- ERROR CHECKS NEEDED HERE AS WELL FOR EXAMPLE WHEN THERE IS NO CLOSEST CITY WITH A POPULATION OF OVER SMTH
 closestCity :: [City] -> Location -> String
 closestCity [city] _ = getCityName city ++ " " ++ show (getNorth (getCityLocation city)) ++ "N" ++ " " ++ show (getEast (getCityLocation city)) ++ "E" ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "M"
 closestCity (cityA : cityB : cn) (Location x y) 
@@ -171,7 +170,12 @@ writeAt :: ScreenPosition -> String -> IO ()
 writeAt position text = do
     goTo position
     putStr text
- 
+
+-- locationToScreenPosition :: Location -> ScreenPosition
+-- locationToScreenPosition (Location north east) =
+--   let x = round (fromIntegral east / 360 * 80) + 40
+--       y = 25 - round (fromIntegral north / 180 * 50)
+--   in (x, y)
 
 --
 -- Your population map code goes here
@@ -184,10 +188,16 @@ writeAt position text = do
 --
 displayMenu :: IO ()
 displayMenu = do
+  putStrLn ""
   putStrLn "Select one of the following options:"
-  putStrLn "1. Display All Citys"
+  putStrLn "1. Display all citys"
   putStrLn "2. Return the population of a city x number of years ago"
-  putStrLn "Press any other key to exit"
+  putStrLn "3. Display all city data"
+  putStrLn "4. Update all city populations"
+  putStrLn "5. Add a new city"
+  putStrLn "6. Check a cities annual growth"
+  putStrLn "7. Find closest city above a certain population"
+  putStrLn "Press any other key to save and exit"
 
 askForInput :: String -> IO String
 askForInput prompt = do
@@ -197,20 +207,172 @@ askForInput prompt = do
 parseCities :: String -> [City]
 parseCities contents = map read (lines contents)
 
+getCityByNameIO :: [City] -> Name -> Maybe City
+getCityByNameIO [] _ = Nothing
+getCityByNameIO (city:rest) name =
+  if getCityName city == name
+    then Just city
+  else getCityByNameIO rest name
+
+getYearPopulationIO :: City -> Int -> Maybe String
+getYearPopulationIO city year = 
+  if length (getCityPopulation city) < year
+    then Nothing
+  else Just (show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m")
+
+updatePopulationsIO :: [City] -> [Int] -> Maybe [City]
+updatePopulationsIO [] _ = Nothing
+updatePopulationsIO (City name location population : rest) (x : xs) = 
+  if length (City name location population : rest) == length (x : xs)
+    then Just (City name location (x : population) : updatePopulations rest xs)
+  else Nothing
+
+addCityIO :: [City] -> City -> Maybe [City]
+addCityIO cities newCity
+  | getCityName newCity `elem` map getCityName cities = Nothing
+  | getCityLocation newCity `elem` map getCityLocation cities = Nothing
+  | length (getCityPopulation newCity) /= populationLength = Nothing
+  | otherwise = Just (sortOn getCityName (cities ++ [newCity]))
+  where
+    populationLength = round ((sum [fromIntegral (length pop) | (City _ _ pop) <- cities]) / fromIntegral (length cities))
+
 main :: IO ()
 main = do
   let filename = "cities.txt"
   contents <- readFile filename 
   let cities = parseCities contents
-  main2 (return cities)
+  main2 filename (return cities)
 
-main2 :: IO [City] -> IO ()
-main2 citiesIO = do
+main2 :: FilePath -> IO [City] -> IO ()
+main2 filename citiesIO = do
   cities <- citiesIO
   displayMenu
   option <- askForInput "Enter your Choice: "
   case option of
     "1" -> do 
       print (allCityNames cities)
-      main2 (return cities)
-    _ -> return ()
+      main2 filename (return cities)
+    "2" -> do
+      putStrLn "Enter a city name: "
+      cityname <- getLine
+      let city = getCityByNameIO cities cityname
+      case city of
+        Nothing -> putStrLn "No city Found"
+        Just city -> do
+          putStrLn "Enter a year: "
+          yearStr <- getLine
+          let yearInt = read yearStr :: Int 
+          let yearsPop = getYearPopulationIO city yearInt
+          case yearsPop of
+            Nothing -> putStrLn "No Data"
+            Just yearsPop -> do
+              putStrLn yearsPop
+      main2 filename (return cities)
+    "3" -> do
+      putStrLn (citiesToString cities)
+      main2 filename (return cities)
+    "4" -> do
+      putStrLn "Enter a list of numbers to update populations: "
+      list <- getLine
+      let newPopFigures = mapM readMaybe (words list) :: Maybe [Int]
+      case newPopFigures of 
+        Nothing -> do
+          putStrLn "Invalid populations value"
+          main2 filename (return cities)
+        Just newPopFigures -> do
+          let newCities = updatePopulationsIO cities newPopFigures
+          case newCities of
+            Nothing -> do
+              putStrLn "Unable to update populations"
+              putStrLn ("You entered " ++ show (length newPopFigures) ++ " population figures")
+              putStrLn ("You need to enter " ++ show (length cities) ++ " population figures")
+              main2 filename (return cities)
+            Just newCities -> do
+              putStrLn "Populations updated"
+              main2 filename (return newCities)
+    "5" -> do
+      putStrLn "Enter the city name: "
+      newName <- getLine
+      if newName `elem` [getCityName city | city <- cities]
+        then do
+          putStrLn "City already exists"
+          main2 filename (return cities)
+      else do
+        putStrLn "Enter the cities location"
+        putStrLn "North value: "
+        newNorthStr <- getLine
+        let newNorth = readMaybe newNorthStr :: Maybe Int
+        case newNorth of
+          Nothing -> do
+            putStrLn "Invald north value"
+            main2 filename (return cities)
+          Just newNorth -> do
+            putStrLn "East value: "
+            newEastStr <- getLine
+            let newEast = readMaybe newEastStr :: Maybe Int
+            case newEast of
+              Nothing -> do
+                putStrLn "Invalid east value"
+                main2 filename (return cities)
+              Just newEast -> do
+                putStrLn "Enter a list of the cities population figures: "
+                newPopStr <- getLine
+                let newPop = mapM readMaybe (words newPopStr) :: Maybe [Int]
+                case newPop of
+                  Nothing -> do
+                    putStrLn "Invalid populations value"
+                    main2 filename (return cities)
+                  Just newPop -> do
+                    let city = City newName (Location newNorth newEast) newPop
+                    let newCities = addCityIO cities city 
+                    case newCities of
+                      Nothing -> do
+                        putStrLn "Unable to add city"
+                        main2 filename (return cities)
+                      Just newCities -> do 
+                        putStrLn "City added"
+                        main2 filename (return newCities)
+    "6" -> do
+      putStrLn "Enter the city name: "
+      newName <- getLine
+      if newName `elem` [getCityName city | city <- cities]
+        then do
+          print (annualGrowth cities newName)
+      else do
+        putStrLn "City does not exists"
+      main2 filename (return cities)
+    "7" -> do
+      putStrLn "Enter a population number (4 digits): "
+      popStr <- getLine
+      let pop = readMaybe popStr :: Maybe Int
+      case pop of
+        Nothing -> do
+          putStrLn "Invalid input"
+          main2 filename (return cities)
+        Just pop -> do
+          let citiesAbovePop = citiesFromPopulation cities pop 
+          if null citiesAbovePop
+            then do
+              putStrLn "There are no cities above that population"
+              main2 filename (return cities)
+          else do 
+            putStrLn "Enter the cities location"
+            putStrLn "North value: "
+            newNorthStr <- getLine
+            let newNorth = readMaybe newNorthStr :: Maybe Int
+            case newNorth of
+              Nothing -> do
+                putStrLn "Invald north value"
+                main2 filename (return cities)
+              Just newNorth -> do
+                putStrLn "East value: "
+                newEastStr <- getLine
+                let newEast = readMaybe newEastStr :: Maybe Int
+                case newEast of
+                  Nothing -> do
+                    putStrLn "Invalid east value"
+                    main2 filename (return cities)
+                  Just newEast -> do
+                    putStrLn (closestCity citiesAbovePop (Location newNorth newEast))
+      main2 filename (return cities)
+    _ -> writeFile filename (intercalate "\n" (map show cities))

@@ -2,6 +2,9 @@ import Data.List
 import Text.Printf
 import Text.Read
 import System.IO
+import Graphics.Win32.Key (getCurrentKeyboardLayout)
+import Control.Monad (forM)
+import Language.Haskell.TH (location)
 
 --
 -- MATHFUN
@@ -62,18 +65,19 @@ allCityNames [] = []
 allCityNames cities = map getCityName cities
 
 -- ***** QUESTION 2 *****
-getCityByName :: [City] -> Name -> City
-getCityByName [] _ = City "" (Location 0 0) []
+getCityByName :: [City] -> Name -> Maybe City
+getCityByName [] _ = Nothing
 getCityByName (city:rest) name =
   if getCityName city == name
-    then city
+    then Just city
   else getCityByName rest name
 
-getYearPopulation :: City -> Int -> String
-getYearPopulation city year = 
-  if length (getCityPopulation city) < year
-    then "No Data"
-  else show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m"
+getYearPopulation :: Maybe City -> Int -> Maybe String
+getYearPopulation Nothing _ = Nothing
+getYearPopulation (Just city) year = 
+  if length (getCityPopulation city) <= year
+    then Nothing
+  else Just (show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m")
 
 -- ***** QUESTION 3 *****
 formatCity :: City -> String
@@ -119,12 +123,27 @@ annualGrowth (city : rest) inputName
 -- ***** QUESTION 7 *****
 closestCity :: [City] -> Location -> String
 closestCity [] _ = "No closest city"
-closestCity [city] _ = getCityName city ++ " " ++ show (getNorth (getCityLocation city)) ++ "N" ++ " " ++ show (getEast (getCityLocation city)) ++ "E" ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "M"
-closestCity (cityA : cityB : rest) (Location x y) 
-  | distance x y (getNorth (getCityLocation cityA)) (getEast (getCityLocation cityA)) < distance x y (getNorth (getCityLocation cityB)) (getEast (getCityLocation cityB)) = closestCity (cityA : rest) (Location x y)
-  | otherwise = closestCity (cityB : rest) (Location x y)
-    where
-      distance x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
+closestCity [city] _ = formatClosestCity city
+closestCity (cityA : cityB : rest) location
+  | distance location cityA  < distance location cityB = closestCity (cityA : rest) location
+  | otherwise = closestCity (cityB : rest) location
+
+distance :: Location -> City -> Float
+distance (Location x y) city = pythagorus x y x2 y2
+  where
+    x2 = getNorth (getCityLocation city)
+    y2 = getEast (getCityLocation city)
+
+pythagorus :: Int -> Int -> Int -> Int -> Float 
+pythagorus x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
+
+formatClosestCity :: City -> String
+formatClosestCity (City name (Location north east) population) =
+  printf "%-10s %-5s %-5s %s"
+    name
+    (show north ++ "N")
+    (show east ++ "E")
+    (show (fromIntegral (head population) / 1000) ++ "m")
 
 citiesFromPopulation :: [City] -> Int -> [City]
 citiesFromPopulation [] _ = []
@@ -139,7 +158,10 @@ demo :: Int -> IO ()
 demo 1 = do
   print (allCityNames testData)
 demo 2 = do
-  putStrLn (getYearPopulation (getCityByName testData "Berlin") 1)
+  let population = getYearPopulation (getCityByName testData "Berlin") 1
+  case population of
+    Nothing -> putStrLn "No Data"
+    Just population -> putStrLn population
 demo 3 = do
   putStr (citiesToString testData)
 demo 4 = do
@@ -149,7 +171,9 @@ demo 5 = do
 demo 6 = do
   print (annualGrowth testData "Athens")
 demo 7 = do
-  print (closestCity (citiesFromPopulation testData 5000) (Location 45 8))
+  putStrLn (closestCity (citiesFromPopulation testData 5000) (Location 45 8))
+demo 8 = do
+  drawMap (allCityData testData)
 demo _ = return ()
 
 
@@ -173,16 +197,31 @@ writeAt position text = do
     goTo position
     putStr text
 
--- locationToScreenPosition :: Location -> ScreenPosition
--- locationToScreenPosition (Location north east) =
---   let x = round (fromIntegral east / 360 * 80) + 40
---       y = 25 - round (fromIntegral north / 180 * 50)
---   in (x, y)
-
 --
 -- Your population map code goes here
 --
+data CityMapData = CityMapData City ScreenPosition
 
+locationToScrPos :: Location -> ScreenPosition
+locationToScrPos (Location north east) = (xPos (fromIntegral east), yPos (fromIntegral north))
+  where
+    xPos east = round (3.076923077 * east)  
+    yPos north = round ((north - 53) * (-1.724137931))
+
+getCityData :: City -> CityMapData
+getCityData city = CityMapData city (locationToScrPos (getCityLocation city))
+
+allCityData :: [City] -> [CityMapData]
+allCityData = map getCityData
+
+drawCity :: CityMapData -> IO ()
+drawCity (CityMapData city scrPos) = do
+  writeAt scrPos ("+" ++ getCityName city ++ " " ++ show (fromIntegral (head (getCityPopulation city)) / 1000) ++ "m")
+
+drawMap :: [CityMapData] -> IO ()
+drawMap cities = do
+  clearScreen
+  mapM_ drawCity cities
 
 
 --
@@ -190,18 +229,6 @@ writeAt position text = do
 --
 
 -- Modified Core Functionality Function, specfically for the UI
-getCityByNameIO :: [City] -> Name -> Maybe City
-getCityByNameIO [] _ = Nothing
-getCityByNameIO (city:rest) name =
-  if getCityName city == name
-    then Just city
-  else getCityByNameIO rest name
-
-getYearPopulationIO :: City -> Int -> Maybe String
-getYearPopulationIO city year = 
-  if length (getCityPopulation city) < year
-    then Nothing
-  else Just (show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m")
 
 updatePopulationsIO :: [City] -> [Int] -> Maybe [City]
 updatePopulationsIO [] _ = Nothing
@@ -231,6 +258,7 @@ displayMenu = do
   putStrLn "5. Add a new city"
   putStrLn "6. Check a cities annual growth"
   putStrLn "7. Find closest city above a certain population"
+  putStrLn "8. Draw a map of all the cities"
   putStrLn "Press any other key to save and exit"
 
 askForInput :: String -> IO String
@@ -257,18 +285,14 @@ main2 filename citiesIO = do
     "2" -> do
       putStrLn "Enter a city name: "
       cityname <- getLine
-      let city = getCityByNameIO cities cityname
-      case city of
-        Nothing -> putStrLn "No city Found"
-        Just city -> do
-          putStrLn "Enter a year: "
-          yearStr <- getLine
-          let yearInt = read yearStr :: Int 
-          let yearsPop = getYearPopulationIO city yearInt
-          case yearsPop of
-            Nothing -> putStrLn "No Data"
-            Just yearsPop -> do
-              putStrLn yearsPop
+      let city = getCityByName cities cityname
+      putStrLn "Enter a year: "
+      yearStr <- getLine
+      let yearInt = read yearStr :: Int 
+      let yearsPop = getYearPopulation city yearInt
+      case yearsPop of
+        Nothing -> putStrLn "No Data"
+        Just yearsPop -> putStrLn yearsPop
       main2 filename (return cities)
     "3" -> do
       putStrLn (citiesToString cities)
@@ -376,5 +400,9 @@ main2 filename citiesIO = do
                     main2 filename (return cities)
                   Just newEast -> do
                     putStrLn (closestCity citiesAbovePop (Location newNorth newEast))
+      main2 filename (return cities)
+    "8" -> do
+      drawMap (allCityData cities)
+      putStrLn ""
       main2 filename (return cities)
     _ -> writeFile filename (intercalate "\n" (map show cities))

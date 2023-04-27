@@ -34,7 +34,6 @@ testData =
     City "Madrid"    (Location 40  4) [6669, 6618, 6559, 6497],
     City "Paris"     (Location 49  2) [11079, 11017, 10958, 10901],
     City "Rome"      (Location 42 13) [4278, 4257, 4234, 4210],
-    City "Stockholm" (Location 59 18) [1657, 1633, 1608, 1583],
     City "Vienna"    (Location 48 16) [1945, 1930, 1915, 1901],
     City "Warsaw"    (Location 52 21) [1790, 1783, 1776, 1768]
   ]
@@ -70,12 +69,12 @@ getCityByName (city:rest) name =
     then Just city
   else getCityByName rest name
 
-getYearPopulation :: Maybe City -> Int -> Maybe String
-getYearPopulation Nothing _ = Nothing
+getYearPopulation :: Maybe City -> Int -> String
+getYearPopulation Nothing _ = "No Data"
 getYearPopulation (Just city) year = 
   if length (getCityPopulation city) <= year
-    then Nothing
-  else Just (show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m")
+    then "No Data"
+  else show (fromIntegral (getCityPopulation city !! year) / 1000) ++ "m"
 
 -- ***** QUESTION 3 *****
 formatCity :: City -> String
@@ -101,15 +100,17 @@ updatePopulations (City name location population : rest) (x : xs) =
 
 -- ***** QUESTION 5 *****
 addCity :: [City] -> City -> [City]
-addCity [] _ = []
-addCity cities newCity = sortOn getCityName (cities ++ [newCity])
+addCity cities newCity = 
+  if checkIfCityExists cities newCity
+    then []
+  else sortOn getCityName (cities ++ [newCity])
 
-checkIfCityExists :: [City] -> City -> Maybe [City]
+checkIfCityExists :: [City] -> City -> Bool
 checkIfCityExists cities newCity
-  | getCityName newCity `elem` map getCityName cities = Nothing
-  | getCityLocation newCity `elem` map getCityLocation cities = Nothing
-  | length (getCityPopulation newCity) /= meanPopulationLength cities = Nothing
-  | otherwise = Just cities 
+  | getCityName newCity `elem` map getCityName cities = True
+  | getCityLocation newCity `elem` map getCityLocation cities = True
+  | length (getCityPopulation newCity) /= meanPopulationLength cities = True
+  | otherwise = False 
 
 meanPopulationLength :: [City] -> Int
 meanPopulationLength cities = round mean
@@ -144,9 +145,7 @@ distance (Location x1 y1) city = pythagorus x1 y1 x2 y2
   where
     x2 = getNorth (getCityLocation city)
     y2 = getEast (getCityLocation city)
-
-pythagorus :: Int -> Int -> Int -> Int -> Float 
-pythagorus x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
+    pythagorus x1 y1 x2 y2 = sqrt ((fromIntegral x2 - fromIntegral x1)^2 + (fromIntegral y2 - fromIntegral y1)^2)
 
 formatClosestCity :: City -> String
 formatClosestCity (City name (Location north east) population) =
@@ -169,25 +168,24 @@ demo :: Int -> IO ()
 demo 1 = do
   print (allCityNames testData)
 demo 2 = do
-  let population = getYearPopulation (getCityByName testData "Berlin") 1
-  case population of
-    Nothing -> putStrLn "No Data"
-    Just population -> putStrLn population
+  let cityName = "Berlin"
+  let year = 1
+  putStrLn (getYearPopulation (getCityByName testData cityName) year)
 demo 3 = do
   putStr (citiesToString testData)
 demo 4 = do
-  putStr (citiesToString (updatePopulations testData [1200,3200,3600,1800,9500,6800,11100,4300,2000,1800]))
+  let populationFigs = [1200,3200,3600,1800,9500,6800,11100,4300,2000,1800]
+  putStr (citiesToString (updatePopulations testData populationFigs))
 demo 5 = do
   let newCity = City "Stockholm" (Location 59 18) [1657, 1633, 1608, 1583]
-  let cities = checkIfCityExists testData newCity
-  case cities of
-    Nothing -> putStrLn "City already exists"
-    Just cities -> do
-      putStr (citiesToString (addCity cities newCity))
+  putStr (citiesToString (addCity testData newCity))
 demo 6 = do
-  print (annualGrowth testData "Athens")
+  let cityName = "Athens"
+  print (annualGrowth testData cityName)
 demo 7 = do
-  putStrLn (closestCity (citiesFromPopulation testData 4000) (Location 45 8))
+  let population = 4000
+  let location = Location 45 8
+  putStrLn (closestCity (citiesFromPopulation testData population) location)
 demo 8 = do
   drawMap (allCityData testData)
 demo _ = return ()
@@ -231,11 +229,11 @@ locationToScrPos (Location north east) = (xPos east, yPos north)
     xPos east = (east - minLongitude) * round longitudePerPixel
     yPos north = screenHeight - ((north - minLatitude) * round latitudePerPixel)
 
-getCityData :: City -> CityMapData
-getCityData city = CityMapData city (locationToScrPos (getCityLocation city))
+createCityData :: City -> CityMapData
+createCityData city = CityMapData city (locationToScrPos (getCityLocation city))
 
 allCityData :: [City] -> [CityMapData]
-allCityData = map getCityData
+allCityData = map createCityData
 
 drawCity :: CityMapData -> IO ()
 drawCity (CityMapData city (x, y)) = do
@@ -328,6 +326,15 @@ askForCityPopulation cities x = do
           return []
       else return newPop
 
+continue :: FilePath -> [City] -> IO ()
+continue filename cities = do
+  next <- askForInput "Press any \"m\" to continue"
+  if next == "m"
+    then do
+      clearScreen
+      main2 filename (return cities)
+  else continue filename cities
+
 main :: IO ()
 main = do
   let filename = "cities.txt"
@@ -343,63 +350,60 @@ main2 filename citiesIO = do
   case option of
     "1" -> do 
       print (allCityNames cities)
-      main2 filename (return cities)
+      continue filename cities
     "2" -> do
       name <- askForCityNameCheckIfExists cities
-      if null name then main2 filename (return cities) else do
+      if null name then continue filename cities else do
         year <- askForInput "Enter a year: "
-        let population = getYearPopulation (getCityByName cities name) (read year)
-        case population of
-          Nothing -> putStrLn "No Data"
-          Just population -> putStrLn population
+        putStrLn (getYearPopulation (getCityByName cities name) (read year))
         print (allCityNames cities)
-        main2 filename (return cities)
+        continue filename cities
     "3" -> do
       putStrLn (citiesToString cities)
-      main2 filename (return cities)
+      continue filename cities
     "4" -> do
       pop <- askForCityPopulation cities (length cities)
-      if null pop then main2 filename (return cities) else do
+      if null pop then continue filename cities else do
         let newCities = updatePopulations cities pop
         putStrLn "Populations updated"
-        main2 filename (return newCities)
+        continue filename newCities
     "5" -> do
       name <- askForCityNameCheckNotExists cities 
-      if null name then main2 filename (return cities) else do
+      if null name then continue filename cities else do
         loc <- askForCityLocation cities 
-        if loc == Location 99999 99999 then main2 filename (return cities) else do 
+        if loc == Location 99999 99999 then continue filename cities else do 
           pop <- askForCityPopulation cities (meanPopulationLength cities)
-          if null pop then main2 filename (return cities) else do 
+          if null pop then continue filename cities else do 
             let newCity = City name loc pop
             let newCities = addCity cities newCity
             putStrLn "New city added"
-            main2 filename (return newCities)
+            continue filename newCities
     "6" -> do
       name <- askForCityNameCheckIfExists cities
-      if null name then main2 filename (return cities) else do
-        print (annualGrowth cities "Athens")
+      if null name then continue filename cities else do
+        print (annualGrowth cities name)
         print (allCityNames cities)
-        main2 filename (return cities)
+        continue filename cities
     "7" -> do
       popStr <- askForInput "Enter a population number (4 digits): "
       let pop = readMaybe popStr :: Maybe Int
       case pop of
         Nothing -> do
           putStrLn "Invalid input"
-          main2 filename (return cities)
+          continue filename cities
         Just pop -> do
           let citiesAbovePop = citiesFromPopulation cities pop 
           if null citiesAbovePop
             then do
               putStrLn "There are no cities above that population"
-              main2 filename (return cities)
+              continue filename cities
           else do 
               loc <- askForCityLocation cities 
-              if loc == Location 99999 99999 then main2 filename (return cities) else do
+              if loc == Location 99999 99999 then continue filename cities else do
                 putStrLn (closestCity citiesAbovePop loc)
-                main2 filename (return cities)
+                continue filename cities
     "8" -> do
+      clearScreen
       drawMap (allCityData cities)
-      putStrLn ""
-      main2 filename (return cities)
+      continue filename cities
     _ -> writeFile filename (intercalate "\n" (map show cities))
